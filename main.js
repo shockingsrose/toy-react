@@ -1,5 +1,7 @@
 import { ToyReact, Component } from './toyReact.js';
 
+window.Square = {};
+
 class Square extends Component {
   constructor(props) {
     super(props);
@@ -9,9 +11,10 @@ class Square extends Component {
   }
 
   render() {
+    window.Square[this.props.value] = this;
     return (
       <button className="square" onClick={() => this.setState({ value: 'X' })}>
-        {this.props.value}
+        {this.state.value || ''}
       </button>
     );
   }
@@ -27,7 +30,7 @@ class Board extends Component {
   render() {
     return (
       <div>
-        <div className="board-row">
+        {/* <div className="board-row">
           {this.renderSquare(0)}
           {this.renderSquare(1)}
           {this.renderSquare(2)}
@@ -36,20 +39,37 @@ class Board extends Component {
           {this.renderSquare(3)}
           {this.renderSquare(4)}
           {this.renderSquare(5)}
-        </div>
+        </div> */}
         <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
+          {this.renderSquare(1)}
+          {this.renderSquare(2)}
+          {this.renderSquare(3)}
+          {this.renderSquare(4)}
         </div>
       </div>
     );
   }
 }
 
-let a = <Board></Board>
+// class MyComponent extends Component {
+//   render() {
+//     return <div id="1">
+//       MyComponent
+//       {this.children}
+//     </div>
+//   }
+// }
+
+// let a = <MyComponent>
+//   <MyComponent>
+//   </MyComponent>
+//   <span>213</span>
+// </MyComponent>
+
+// console.log(a);
 
 ToyReact.render(
-  a,
+  <Board></Board>,
+  // a,
   document.body
 );
