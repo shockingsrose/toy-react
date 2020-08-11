@@ -38,6 +38,8 @@ class ElementWrapper {
   mountTo(range) {
     // console.log('elementWrapper mountTo');
     // parent.appendChild(this.root);
+    this.range = range;
+    range.deleteContents();
     const element = document.createElement(this.type);
 
     for (let name in this.props) {
@@ -82,6 +84,7 @@ class TextWrapper {
   }
 
   mountTo(range) {
+    this.range = range;
     range.insertNode(this.root);
   }
 }
@@ -116,9 +119,93 @@ export class Component {
     // range.setEnd(rangeContainer, endOffset);
     // range.insertNode(placeholder);
 
-    this.range.deleteContents();
+    // this.range.deleteContents();
     let vdom = this.render();
-    vdom.mountTo(this.range);
+    if (this.vdom) {
+      // 查看当前节点是否相同 (type, props)
+      const isSameNode = (node1, node2) => {
+        // compare type
+        if (node1.type !== node2.type) {
+          return false;
+        }
+
+        // compare props
+        if (Object.keys(node1.props).length !== Object.keys(node2.props).length) {
+          return false;
+        }
+        for (const key in node1.props) {
+          const value1 = node1.props[key];
+          const value2 = node2.props[key];
+          if (typeof value1 === 'function'
+            && typeof value2 === 'function'
+            && value1.toString() === value2.toString()) {
+            continue;
+          }
+
+
+          if (node1.props[key] !== node2.props[key]) {
+            return false;
+          }
+        }
+        // if (Object.keys(node1.props).find((key) => node1.props[key] !== node2.props[key])) {
+        //   return false;
+        // }
+
+        return true;
+      };
+
+      // 从树的最外层开始递归 查看整个树是否相同
+      const isSameTree = (node1, node2) => {
+        if (!isSameNode(node1, node2)) {
+          return false;
+        }
+
+        if (node1.children.length !== node2.children.length) {
+          return false;
+        }
+
+        for (let i = 0; i < node1.children.length; i++) {
+          if (!isSameTree(node1.children[i], node2.children[i])) {
+            return false;
+          }
+        }
+
+        return true;
+      };
+
+      const replace = (newTree, oldTree) => {
+        if (isSameTree(newTree, oldTree)) {
+          return;
+        }
+
+        if (!isSameNode(newTree, oldTree)) {
+          // 不理解
+          newTree.mountTo(oldTree.range);
+        } else {
+          for (let i = 0; i < newTree.children.length; i++) {
+            replace(newTree.children[i], oldTree.children[i]);
+          }
+        }
+      }
+
+      if (isSameTree(vdom, this.vdom)) {
+        return;
+      }
+
+      // 如果根节点不同，直接重新渲染
+      if (!isSameNode(vdom, this.vdom)) {
+        vdom.mountTo(this.vdom.range);
+      } else {
+        // diff算法
+        console.log(this.vdom);
+        console.log(vdom);
+        replace(vdom, this.vdom);
+      }
+
+    } else {// 如果this.vdom不存在（初始化），直接渲染
+      vdom.mountTo(this.range);
+    }
+    this.vdom = vdom;
   }
 
   appendChild(vchild) {
